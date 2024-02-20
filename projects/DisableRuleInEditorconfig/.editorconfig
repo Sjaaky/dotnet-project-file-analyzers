@@ -1,0 +1,3 @@
+[*]
+dotnet_diagnostic.CS8604.severity = none # Define the <OutputType> node explicitly.
+dotnet_diagnostic.Proj0010.severity = none # Define the <OutputType> node explicitly.
