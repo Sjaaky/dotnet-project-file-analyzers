@@ -1,3 +1,6 @@
-﻿fallback
+﻿eol
+fallback
+lexer
 README
+tokenize
 usings

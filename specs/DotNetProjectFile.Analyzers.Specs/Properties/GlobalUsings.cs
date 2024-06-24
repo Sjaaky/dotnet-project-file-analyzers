@@ -9,3 +9,4 @@ global using System.Diagnostics.Contracts;
 global using System.Text;
 global using Resx = DotNetProjectFile.Analyzers.Resx;
 global using MsBuildProject = DotNetProjectFile.MsBuild.Project;
+global using Specs.TestTools;
