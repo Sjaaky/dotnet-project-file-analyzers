@@ -57,7 +57,7 @@ public class Does_not_match
     }
 }
 
-internal sealed class Grammar : Grammar<SyntaxKind>
+internal sealed class Grammar : Grammar<Grammar, SyntaxKind>
 {
     public static Lex multiple_words(Lex l) => l +
         word + space + word;
@@ -78,7 +78,7 @@ internal sealed class Grammar : Grammar<SyntaxKind>
         regex("[a-z][a-z0-9_]+", SyntaxKind.Word);
 
     public static Lex some_line(Lex l) => l +
-        word + Option(eol);
+        word + eol;
 
     public static Lex space(Lex l) => whitespace(SyntaxKind.Whitespace)(l);
 

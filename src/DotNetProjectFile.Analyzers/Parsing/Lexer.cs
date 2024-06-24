@@ -34,8 +34,8 @@ public readonly struct Lexer<TSyntaxKind>
 
     public static Lexer<TSyntaxKind> operator +(Lexer<TSyntaxKind> lexer, Grammar<TSyntaxKind>.Rule rule) => lexer.State switch
     {
-        LexerState.Match => rule(lexer),
-        LexerState.Done => lexer.NoMatch(),
+        LexerState.Match or
+        LexerState.Done => rule(lexer),
 
         // LexerState.NoMatch
         _ => lexer,

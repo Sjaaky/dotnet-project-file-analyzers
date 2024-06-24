@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace DotNetProjectFile.Parsing;
 
+[DebuggerDisplay("{Span} {ToString()}")]
 public readonly struct SourceTextSpan(SourceText source, TextSpan span)
 {
     public delegate TextSpan? Match(SourceTextSpan sourceTextSpan);
@@ -34,6 +35,8 @@ public readonly struct SourceTextSpan(SourceText source, TextSpan span)
 
     public TextSpan? Matches([StringSyntax(StringSyntaxAttribute.Regex)] string regex)
     {
+        if (Span.IsEmpty) return NoMatch;
+
         var pattern = regex[0] == '^' ? regex : '^' + regex;
 
         var match = Regex.Match(Source.ToString(Span), pattern, Options, Timeout);
@@ -42,6 +45,8 @@ public readonly struct SourceTextSpan(SourceText source, TextSpan span)
             ? new(Span.Start, match.Length)
             : NoMatch;
     }
+
+    public override string ToString() => Source.ToString(Span);
 
     private static readonly RegexOptions Options = RegexOptions.CultureInvariant;
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(10);

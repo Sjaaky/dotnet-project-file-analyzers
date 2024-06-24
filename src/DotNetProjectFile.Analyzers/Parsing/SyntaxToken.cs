@@ -2,18 +2,17 @@
 
 namespace DotNetProjectFile.Parsing;
 
-[DebuggerDisplay("{DebuggerDisplay}")]
+[DebuggerDisplay("{Span} {Text}, {Kind}")]
 public readonly struct SyntaxToken<TSyntaxKind>(TextSpan span, TSyntaxKind kind, SourceText source)
 {
     public readonly TextSpan Span = span;
 
     public readonly TSyntaxKind Kind = kind;
 
-    [Pure]
-    public override string ToString() => Source?.ToString(Span) ?? string.Empty;
+    public string Text => Source?.ToString(Span) ?? string.Empty;
 
-    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"[{Span}] {{{ToString()}}}, {Kind}";
+    [Pure]
+    public override string ToString() => Text;
 
     private readonly SourceText? Source = source;
 }
