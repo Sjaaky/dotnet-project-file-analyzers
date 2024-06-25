@@ -27,10 +27,12 @@ public readonly struct Lexer<TSyntaxKind>
     public Lexer<TSyntaxKind> NoMatch() => new(Span, Source, Tokens, LexerState.NoMatch);
 
     [Pure]
-    public Lexer<TSyntaxKind> Match(SourceTextSpan.Match match, TSyntaxKind kind)
-        => match(new(Source, Span)) is { } span
-        ? New(span, kind)
-        : NoMatch();
+    public Lexer<TSyntaxKind> Match(SourceTextSpan.Match match, TSyntaxKind kind) => match(new(Source, Span)) switch
+    {
+        null => NoMatch(),
+        var span when span.Value.Length == 0 => this,
+        var span => New(span.Value, kind),
+    };
 
     public static Lexer<TSyntaxKind> operator +(Lexer<TSyntaxKind> lexer, Grammar<TSyntaxKind>.Rule rule) => lexer.State switch
     {

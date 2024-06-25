@@ -5,6 +5,30 @@ namespace Parsing.Tokenizing_specs;
 
 public class Matches
 {
+    public class Regular_epxressions
+    {
+        [Test]
+        public void zero_length_match_is_okay()
+        {
+            var lex = Lex.Tokenize(Source.Text("BBB"),
+                l => l + Grammar.regex("A*", SyntaxKind.Word) + Grammar.regex("B*", SyntaxKind.Word));
+
+            lex.Should()
+                .HaveTokenized(SyntaxKind.Word);
+            lex.Tokens.Single().Text.Should().Be("BBB");
+        }
+
+        [Test]
+        public void dot_star_does_not_match_new_line()
+        {
+            var lex = Lex.Tokenize(Source.Text("Hello\nWorld"),
+                l => l + Grammar.regex(".*", SyntaxKind.Word) + Grammar.eol + Grammar.regex(".*", SyntaxKind.Word));
+
+            lex.Should()
+                .HaveTokenized(SyntaxKind.Word, SyntaxKind.EndOfLine, SyntaxKind.Word);
+        }
+    }
+
     [Test]
     public void keywords()
     {

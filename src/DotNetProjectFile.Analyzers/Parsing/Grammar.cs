@@ -26,63 +26,30 @@ public class Grammar<TGrammar, TSyntaxKind> : Grammar<TSyntaxKind>
 
     [Pure]
     public static Rule Repeat(Rule rule, int min = 0, int max = int.MaxValue) =>
-        l =>
-        {
-            var curr = l;
-            var repeat = 0;
-
-            while (repeat++ < max && curr.State != LexerState.Done)
-            {
-                var next = rule(curr);
-
-                if (next.State == LexerState.NoMatch)
-                {
-                    // we have no match
-                    if (repeat < min)
-                    {
-                        return next;
-                    }
-                    // we have enough.
-                    else
-                    {
-                        return curr;
-                    }
-                }
-                curr = next;
-            }
-
-            if (repeat < min)
-            {
-                return curr.NoMatch();
-            }
-
-            return curr;
-        };
+        l => Rules.Repeat(l, rule, min, max);
 
     [Pure]
     public static Rule Option(Rule rule) =>
-        l => rule(l) is { State: not LexerState.NoMatch } m
-            ? m
-            : l;
+        l => Rules.Option(l, rule);
 
     [Pure]
     public static Rule ch(char c) => ch(c, Resolve.CharKind(c));
 
     [Pure]
     public static Rule ch(char c, TSyntaxKind kind) =>
-        l => l.Match(s => s.StartsWith(c), kind);
+        l => Rules.ch(l, c, kind);
 
     [Pure]
     public static Rule literal(string str, TSyntaxKind kind) =>
-        l => l.Match(s => s.StartsWith(str), kind);
+        l => Rules.literal(l, str, kind);
 
     [Pure]
     public static Rule regex([StringSyntax(StringSyntaxAttribute.Regex)] string pattern, TSyntaxKind kind) =>
-        l => l.Match(m => m.Matches(pattern), kind);
+        l => Rules.regex(l, pattern, kind);
 
     [Pure]
     public static Rule whitespace(TSyntaxKind kind) =>
-        l => l + regex("^[ \t]+", kind);
+        l => Rules.whitespace(l, kind);
 
     protected virtual TSyntaxKind EndOfLineKind => Enum.TryParse<TSyntaxKind>("EndOfLine", out var kind) ? kind : default;
 
@@ -96,4 +63,64 @@ public class Grammar<TGrammar, TSyntaxKind> : Grammar<TSyntaxKind>
     [Pure]
     protected virtual TSyntaxKind KeywordKind(string keyword)
         => Enum.TryParse<TSyntaxKind>($"{keyword}Keyword", true, out var kind) ? kind : default;
+
+    private static class Rules
+    {
+        public static Lexer<TSyntaxKind> Option(Lexer<TSyntaxKind> l, Rule rule)
+        {
+            var next = rule(l);
+            if (next.State != LexerState.NoMatch)
+            {
+                return next;
+            }
+            else
+            {
+                return l;
+            }
+        }
+
+        public static Lexer<TSyntaxKind> Repeat(Lexer<TSyntaxKind> l, Rule rule, int min, int max)
+        {
+            var curr = l;
+            var repeat = 0;
+
+            while (repeat < max)
+            {
+                var next = rule(curr);
+
+                switch (next.State)
+                {
+                    case LexerState.Match:
+                        repeat++;
+                        curr = next;
+                        break;
+
+                    case LexerState.Done:
+                        repeat++;
+                        return repeat >= min ? next : l.NoMatch();
+
+                    case LexerState.NoMatch:
+                    default:
+                        return repeat >= min ? next : l.NoMatch();
+                }
+            }
+            return l.NoMatch();
+        }
+
+        [Pure]
+        public static Lexer<TSyntaxKind> whitespace(Lexer<TSyntaxKind> l, TSyntaxKind kind)
+            => l.Match(s => s.Matches(c => c == ' ' || c == '\t'), kind);
+
+        [Pure]
+        public static Lexer<TSyntaxKind> ch(Lexer<TSyntaxKind> l, char c, TSyntaxKind kind)
+           => l.Match(s => s.StartsWith(c), kind);
+
+        [Pure]
+        public static Lexer<TSyntaxKind> literal(Lexer<TSyntaxKind> l, string str, TSyntaxKind kind)
+            => l.Match(s => s.StartsWith(str), kind);
+
+        [Pure]
+        public static Lexer<TSyntaxKind> regex(Lexer<TSyntaxKind> l, string pattern, TSyntaxKind kind)
+            => l.Match(m => m.Matches(pattern), kind);
+    }
 }

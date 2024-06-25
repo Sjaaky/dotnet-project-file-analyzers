@@ -13,11 +13,13 @@ public readonly struct SourceTextSpan(SourceText source, TextSpan span)
     public readonly SourceText Source = source;
     public readonly TextSpan Span = span;
 
+    [Pure]
     public TextSpan? StartsWith(char ch)
         => !Span.IsEmpty && Source[Span.Start] == ch
         ? new(Span.Start, 1)
         : null;
 
+    [Pure]
     public TextSpan? StartsWith(string str)
     {
         if (Span.Length >= str.Length)
@@ -33,15 +35,30 @@ public readonly struct SourceTextSpan(SourceText source, TextSpan span)
         else return NoMatch;
     }
 
+    [Pure]
+    public TextSpan? Matches(Predicate<char> match)
+    {
+        var length = 0;
+        for (var i = Span.Start; i < Span.Length; i++)
+        {
+            if (match(Source[i]))
+            {
+                length++;
+            }
+            else break;
+        }
+
+        return length != 0 ? new(Span.Start, length) : NoMatch;
+    }
+
+    [Pure]
     public TextSpan? Matches([StringSyntax(StringSyntaxAttribute.Regex)] string regex)
     {
-        if (Span.IsEmpty) return NoMatch;
-
         var pattern = regex[0] == '^' ? regex : '^' + regex;
 
         var match = Regex.Match(Source.ToString(Span), pattern, Options, Timeout);
 
-        return match.Success && match.Length > 0
+        return match.Success
             ? new(Span.Start, match.Length)
             : NoMatch;
     }
