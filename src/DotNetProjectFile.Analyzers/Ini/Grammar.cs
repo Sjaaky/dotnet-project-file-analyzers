@@ -16,10 +16,11 @@ public sealed class Grammar : Grammar<Grammar, SyntaxKind>
         ch('[') + header_name + ch(']') + eol;
 
     public static Lex header_name(Lex l) => l +
-        regex(@"[^\]\n]+", SyntaxKind.HeaderToken);
+        regex(@"[^][]+", SyntaxKind.HeaderToken);
 
     public static Lex line(Lex l) => l +
-        Option(kvp) + Option(comment) + eol;
+        Not(header) + regex(".*", SyntaxKind.ValueToken) + eol;
+        //Option(kvp) + Option(comment) + eol;
 
     public static Lex kvp(Lex l) => l +
         space + key + space + assign + space + value;

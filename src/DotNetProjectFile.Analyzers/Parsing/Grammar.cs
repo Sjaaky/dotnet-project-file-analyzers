@@ -29,6 +29,10 @@ public class Grammar<TGrammar, TSyntaxKind> : Grammar<TSyntaxKind>
         l => Rules.Repeat(l, rule, min, max);
 
     [Pure]
+    public static Rule Not(Rule rule) =>
+        l => Rules.Not(l, rule);
+
+    [Pure]
     public static Rule Option(Rule rule) =>
         l => Rules.Option(l, rule);
 
@@ -66,6 +70,15 @@ public class Grammar<TGrammar, TSyntaxKind> : Grammar<TSyntaxKind>
 
     private static class Rules
     {
+        public static Lexer<TSyntaxKind> Not(Lexer<TSyntaxKind> l, Rule rule)
+        {
+            var next = rule(l);
+
+            return next.State == LexerState.Match
+                ? l.NoMatch()
+                : l;
+        }
+
         public static Lexer<TSyntaxKind> Option(Lexer<TSyntaxKind> l, Rule rule)
         {
             var next = rule(l);

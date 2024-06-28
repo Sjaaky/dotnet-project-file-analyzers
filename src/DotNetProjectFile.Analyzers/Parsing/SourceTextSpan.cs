@@ -56,11 +56,34 @@ public readonly struct SourceTextSpan(SourceText source, TextSpan span)
     {
         var pattern = regex[0] == '^' ? regex : '^' + regex;
 
-        var match = Regex.Match(Source.ToString(Span), pattern, Options, Timeout);
+
+        var match = Regex.Match(Source.ToString(Line()), pattern, Options, Timeout);
 
         return match.Success
             ? new(Span.Start, match.Length)
             : NoMatch;
+    }
+
+    [Pure]
+    private TextSpan Line()
+    {
+        var len = 0;
+        for (var i = Span.Start; i < Span.Length; ++i)
+        {
+            if (Source[i] == '\n')
+            {
+                if(i > Span.Start && Source[i-1] == '\r')
+                {
+                    len--;
+                }
+                break;
+            }
+            else
+            {
+                len++;
+            }
+        }
+        return new(Span.Start, len);
     }
 
     public override string ToString() => Source.ToString(Span);

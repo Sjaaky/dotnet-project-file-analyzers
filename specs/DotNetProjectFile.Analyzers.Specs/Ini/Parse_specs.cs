@@ -13,6 +13,8 @@ public class Parses
 
         var lexer = Lexer<DotNetProjectFile.Ini.SyntaxKind>.Tokenize(source, DotNetProjectFile.Ini.Grammar.file);
 
-        lexer.Tokens.Should().NotBeEmpty();
+        var tokens = lexer.Tokens.ToArray();
+
+        tokens.Should().NotBeEmpty();
     }
 }
