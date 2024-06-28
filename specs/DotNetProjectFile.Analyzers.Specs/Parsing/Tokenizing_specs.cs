@@ -3,12 +3,12 @@ using Lex = DotNetProjectFile.Parsing.Lexer<Parsing.Tokenizing_specs.SyntaxKind>
 
 namespace Parsing.Tokenizing_specs;
 
-public class Matches
+public static class Regular_expressions
 {
-    public class Regular_epxressions
+    public class Match
     {
         [Test]
-        public void zero_length_match_is_okay()
+        public void zero_length_match()
         {
             var lex = Lex.Tokenize(Source.Text("BBB"),
                 l => l + Grammar.regex("A*", SyntaxKind.Word) + Grammar.regex("B*", SyntaxKind.Word));
@@ -17,9 +17,12 @@ public class Matches
                 .HaveTokenized(SyntaxKind.Word);
             lex.Tokens.Single().Text.Should().Be("BBB");
         }
+    }
 
+    public class Do_not_match
+    {
         [Test]
-        public void dot_star_does_not_match_new_line()
+        public void new_line_with_dot_star()
         {
             var lex = Lex.Tokenize(Source.Text("Hello\nWorld"),
                 l => l + Grammar.regex(".*", SyntaxKind.Word) + Grammar.eol + Grammar.regex(".*", SyntaxKind.Word));
@@ -29,6 +32,10 @@ public class Matches
         }
     }
 
+}
+
+public class Matches
+{
     [Test]
     public void keywords()
     {
