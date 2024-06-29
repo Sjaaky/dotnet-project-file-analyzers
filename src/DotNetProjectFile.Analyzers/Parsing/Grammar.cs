@@ -68,6 +68,10 @@ public class Grammar<TGrammar, TSyntaxKind> : Grammar<TSyntaxKind>
     protected virtual TSyntaxKind KeywordKind(string keyword)
         => Enum.TryParse<TSyntaxKind>($"{keyword}Keyword", true, out var kind) ? kind : default;
 
+#pragma warning disable S3218 // Inner class members should not shadow outer class "static" or type members
+    /// <remarks>
+    /// This indirection only exists to make debugging easier.
+    /// </remarks>
     private static class Rules
     {
         public static Lexer<TSyntaxKind> Not(Lexer<TSyntaxKind> l, Rule rule)

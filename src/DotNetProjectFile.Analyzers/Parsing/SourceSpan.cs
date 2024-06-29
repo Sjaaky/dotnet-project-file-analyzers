@@ -4,14 +4,40 @@ using System.Text.RegularExpressions;
 namespace DotNetProjectFile.Parsing;
 
 [DebuggerDisplay("{Span} {ToString()}")]
-public readonly struct SourceTextSpan(SourceText source, TextSpan span)
+public readonly record struct SourceSpan(SourceText Source, TextSpan Span)
 {
-    public delegate TextSpan? Match(SourceTextSpan sourceTextSpan);
+    public delegate TextSpan? Match(SourceSpan sourceTextSpan);
 
     private static readonly TextSpan? NoMatch = null;
 
-    public readonly SourceText Source = source;
-    public readonly TextSpan Span = span;
+    public string Text => Source.ToString(Span);
+
+    public int Start => Span.Start;
+
+    public int Length => Span.Length;
+
+    public bool IsEmpty => Span.IsEmpty;
+
+    [Pure]
+    public SourceSpan Trim(int left) => new(Source, new(Start + left, Length - left));
+
+    [Pure]
+    public TextSpan Line()
+    {
+        var len = -1;
+        var i = Span.Start;
+
+        while (++len < Span.Length)
+        {
+            if (Source[i++] == '\n')
+            {
+                return len != 0 && Source[i - 2] == '\r'
+                    ? new(Span.Start, len - 1)
+                    : new(Span.Start, len);
+            }
+        }
+        return Span;
+    }
 
     [Pure]
     public TextSpan? StartsWith(char ch)
@@ -55,9 +81,8 @@ public readonly struct SourceTextSpan(SourceText source, TextSpan span)
     public TextSpan? Matches([StringSyntax(StringSyntaxAttribute.Regex)] string regex)
     {
         var pattern = regex[0] == '^' ? regex : '^' + regex;
-
-
-        var match = Regex.Match(Source.ToString(Line()), pattern, Options, Timeout);
+        var line = Line();
+        var match = Regex.Match(Source.ToString(line), pattern, Options, Timeout);
 
         return match.Success
             ? new(Span.Start, match.Length)
@@ -65,28 +90,7 @@ public readonly struct SourceTextSpan(SourceText source, TextSpan span)
     }
 
     [Pure]
-    private TextSpan Line()
-    {
-        var len = 0;
-        for (var i = Span.Start; i < Span.Length; ++i)
-        {
-            if (Source[i] == '\n')
-            {
-                if(i > Span.Start && Source[i-1] == '\r')
-                {
-                    len--;
-                }
-                break;
-            }
-            else
-            {
-                len++;
-            }
-        }
-        return new(Span.Start, len);
-    }
-
-    public override string ToString() => Source.ToString(Span);
+    public override string ToString() => Text;
 
     private static readonly RegexOptions Options = RegexOptions.CultureInvariant;
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(10);

@@ -6,28 +6,24 @@ namespace DotNetProjectFile.Parsing;
 public readonly struct Lexer<TSyntaxKind>
     where TSyntaxKind : struct, Enum
 {
-    private Lexer(TextSpan span, SourceText source, IReadOnlyCollection<SyntaxToken<TSyntaxKind>> tokens, LexerState state)
+    private Lexer(SourceSpan span, IReadOnlyCollection<SyntaxToken<TSyntaxKind>> tokens, LexerState state)
     {
         Span = span;
-        Source = source;
         Tokens = tokens;
         State = state;
     }
 
     public IReadOnlyCollection<SyntaxToken<TSyntaxKind>> Tokens { get; }
 
-    public readonly SourceText Source;
-
-    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    public readonly TextSpan Span;
+    public readonly SourceSpan Span;
 
     public LexerState State { get; }
 
     [Pure]
-    public Lexer<TSyntaxKind> NoMatch() => new(Span, Source, Tokens, LexerState.NoMatch);
+    public Lexer<TSyntaxKind> NoMatch() => new(Span, Tokens, LexerState.NoMatch);
 
     [Pure]
-    public Lexer<TSyntaxKind> Match(SourceTextSpan.Match match, TSyntaxKind kind) => match(new(Source, Span)) switch
+    public Lexer<TSyntaxKind> Match(SourceSpan.Match match, TSyntaxKind kind) => match(Span) switch
     {
         null => NoMatch(),
         var span when span.Value.Length == 0 => this,
@@ -55,15 +51,15 @@ public readonly struct Lexer<TSyntaxKind>
     [Pure]
     private Lexer<TSyntaxKind> New(TextSpan span, TSyntaxKind kind)
     {
-        var token = new SyntaxToken<TSyntaxKind>(span, kind, Source);
-        var lefto = new TextSpan(Span.Start + span.Length, Span.Length - span.Length);
-        var state = lefto.IsEmpty ? LexerState.Done : LexerState.Match;
-        return new(lefto, Source, [.. Tokens, token], state);
+        var token = new SyntaxToken<TSyntaxKind>(span, kind, Span.Source);
+        var trimm = Span.Trim(span.Length);
+        var state = trimm.IsEmpty ? LexerState.Done : LexerState.Match;
+        return new(trimm, [.. Tokens, token], state);
     }
 
     [Pure]
     public static Lexer<TSyntaxKind> New(SourceText source)
-        => new(new(0, source.Length), source, [], source.Length == 0 ? LexerState.Done : LexerState.Match);
+        => new(new(source, new(0, source.Length)), [], source.Length == 0 ? LexerState.Done : LexerState.Match);
 
     [Pure]
     public static Lexer<TSyntaxKind> Tokenize(SourceText source, Grammar<TSyntaxKind>.Rule rule)
