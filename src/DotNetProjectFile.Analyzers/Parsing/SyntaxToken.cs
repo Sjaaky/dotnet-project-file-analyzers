@@ -3,11 +3,11 @@
 namespace DotNetProjectFile.Parsing;
 
 [DebuggerDisplay("{Span} {Text}, {Kind}")]
-public readonly struct SyntaxToken<TSyntaxKind>(TextSpan span, TSyntaxKind kind, SourceText source)
+public readonly struct SyntaxToken<TKInd>(TextSpan span, TKInd kind, SourceText source)
 {
     public readonly TextSpan Span = span;
 
-    public readonly TSyntaxKind Kind = kind;
+    public readonly TKInd Kind = kind;
 
     public string Text => Source?.ToString(Span) ?? string.Empty;
 

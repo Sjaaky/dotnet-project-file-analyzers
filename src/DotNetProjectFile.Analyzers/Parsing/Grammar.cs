@@ -1,24 +1,24 @@
 ﻿namespace DotNetProjectFile.Parsing;
 
 [Inheritable]
-public class Grammar<TSyntaxKind>
-    where TSyntaxKind : struct, Enum
+public class Grammar<TKInd>
+    where TKInd : struct, Enum
 {
-    public delegate Lexer<TSyntaxKind> Rule(Lexer<TSyntaxKind> lexar);
+    public delegate Lexer<TKInd> Rule(Lexer<TKInd> lexar);
 }
 
-public class Grammar<TGrammar, TSyntaxKind> : Grammar<TSyntaxKind>
-    where TGrammar : Grammar<TGrammar, TSyntaxKind>, new()
-    where TSyntaxKind : struct, Enum
+public class Grammar<TGrammar, TKInd> : Grammar<TKInd>
+    where TGrammar : Grammar<TGrammar, TKInd>, new()
+    where TKInd : struct, Enum
 {
     protected static readonly TGrammar Resolve = new();
 
     [Pure]
-    public static Lexer<TSyntaxKind> eol(Lexer<TSyntaxKind> l) => l +
+    public static Lexer<TKInd> eol(Lexer<TKInd> l) => l +
         eof | ch('\n', Resolve.EndOfLineKind) | literal("\r\n", Resolve.EndOfLineKind);
 
     [Pure]
-    public static Lexer<TSyntaxKind> eof(Lexer<TSyntaxKind> l)
+    public static Lexer<TKInd> eof(Lexer<TKInd> l)
         => l.State == LexerState.Done ? l : l.NoMatch();
 
     [Pure]
@@ -40,33 +40,33 @@ public class Grammar<TGrammar, TSyntaxKind> : Grammar<TSyntaxKind>
     public static Rule ch(char c) => ch(c, Resolve.CharKind(c));
 
     [Pure]
-    public static Rule ch(char c, TSyntaxKind kind) =>
+    public static Rule ch(char c, TKInd kind) =>
         l => Rules.ch(l, c, kind);
 
     [Pure]
-    public static Rule literal(string str, TSyntaxKind kind) =>
+    public static Rule literal(string str, TKInd kind) =>
         l => Rules.literal(l, str, kind);
 
     [Pure]
-    public static Rule regex([StringSyntax(StringSyntaxAttribute.Regex)] string pattern, TSyntaxKind kind) =>
+    public static Rule regex([StringSyntax(StringSyntaxAttribute.Regex)] string pattern, TKInd kind) =>
         l => Rules.regex(l, pattern, kind);
 
     [Pure]
-    public static Rule whitespace(TSyntaxKind kind) =>
+    public static Rule whitespace(TKInd kind) =>
         l => Rules.whitespace(l, kind);
 
-    protected virtual TSyntaxKind EndOfLineKind => Enum.TryParse<TSyntaxKind>("EndOfLine", out var kind) ? kind : default;
+    protected virtual TKInd EndOfLineKind => Enum.TryParse<TKInd>("EndOfLine", out var kind) ? kind : default;
 
     [Pure]
-    protected virtual TSyntaxKind CharKind(char c)
+    protected virtual TKInd CharKind(char c)
     {
         int obj = c;
-        return (TSyntaxKind)(object)obj;
+        return (TKInd)(object)obj;
     }
 
     [Pure]
-    protected virtual TSyntaxKind KeywordKind(string keyword)
-        => Enum.TryParse<TSyntaxKind>($"{keyword}Keyword", true, out var kind) ? kind : default;
+    protected virtual TKInd KeywordKind(string keyword)
+        => Enum.TryParse<TKInd>($"{keyword}Keyword", true, out var kind) ? kind : default;
 
 #pragma warning disable S3218 // Inner class members should not shadow outer class "static" or type members
     /// <remarks>
@@ -74,7 +74,7 @@ public class Grammar<TGrammar, TSyntaxKind> : Grammar<TSyntaxKind>
     /// </remarks>
     private static class Rules
     {
-        public static Lexer<TSyntaxKind> Not(Lexer<TSyntaxKind> l, Rule rule)
+        public static Lexer<TKInd> Not(Lexer<TKInd> l, Rule rule)
         {
             var next = rule(l);
 
@@ -83,7 +83,7 @@ public class Grammar<TGrammar, TSyntaxKind> : Grammar<TSyntaxKind>
                 : l;
         }
 
-        public static Lexer<TSyntaxKind> Option(Lexer<TSyntaxKind> l, Rule rule)
+        public static Lexer<TKInd> Option(Lexer<TKInd> l, Rule rule)
         {
             var next = rule(l);
             if (next.State != LexerState.NoMatch)
@@ -96,7 +96,7 @@ public class Grammar<TGrammar, TSyntaxKind> : Grammar<TSyntaxKind>
             }
         }
 
-        public static Lexer<TSyntaxKind> Repeat(Lexer<TSyntaxKind> l, Rule rule, int min, int max)
+        public static Lexer<TKInd> Repeat(Lexer<TKInd> l, Rule rule, int min, int max)
         {
             var curr = l;
             var repeat = 0;
@@ -125,19 +125,19 @@ public class Grammar<TGrammar, TSyntaxKind> : Grammar<TSyntaxKind>
         }
 
         [Pure]
-        public static Lexer<TSyntaxKind> whitespace(Lexer<TSyntaxKind> l, TSyntaxKind kind)
+        public static Lexer<TKInd> whitespace(Lexer<TKInd> l, TKInd kind)
             => l.Match(s => s.Matches(c => c == ' ' || c == '\t'), kind);
 
         [Pure]
-        public static Lexer<TSyntaxKind> ch(Lexer<TSyntaxKind> l, char c, TSyntaxKind kind)
+        public static Lexer<TKInd> ch(Lexer<TKInd> l, char c, TKInd kind)
            => l.Match(s => s.StartsWith(c), kind);
 
         [Pure]
-        public static Lexer<TSyntaxKind> literal(Lexer<TSyntaxKind> l, string str, TSyntaxKind kind)
+        public static Lexer<TKInd> literal(Lexer<TKInd> l, string str, TKInd kind)
             => l.Match(s => s.StartsWith(str), kind);
 
         [Pure]
-        public static Lexer<TSyntaxKind> regex(Lexer<TSyntaxKind> l, string pattern, TSyntaxKind kind)
+        public static Lexer<TKInd> regex(Lexer<TKInd> l, string pattern, TKInd kind)
             => l.Match(m => m.Matches(pattern), kind);
     }
 }

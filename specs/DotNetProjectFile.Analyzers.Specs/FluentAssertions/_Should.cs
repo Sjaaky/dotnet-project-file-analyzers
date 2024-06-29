@@ -5,7 +5,7 @@ namespace FluentAssertions;
 internal static class DotNetProjectFileAnalyzersFluentAssertionsExtensions
 {
     [Pure]
-    public static LexerAssertions<TSyntaxKind> Should<TSyntaxKind>(this Lexer<TSyntaxKind> lexer)
-        where TSyntaxKind : struct, Enum
+    public static LexerAssertions<TKInd> Should<TKInd>(this Lexer<TKInd> lexer)
+        where TKInd : struct, Enum
         => new(lexer);
 }
