@@ -2,9 +2,8 @@
 
 namespace DotNetProjectFile.Parsing;
 
-[DebuggerDisplay("Tokens: {Tokens.Count}, {Span}, Text = {Source.ToString(Span)}")]
-public readonly struct Lexer<TKInd>
-    where TKInd : struct, Enum
+[DebuggerDisplay("Tokens: {Tokens.Count}, {Span.Span}, Text = {Span}")]
+public readonly struct Lexer<TKInd> where TKInd : struct, Enum
 {
     private Lexer(SourceSpan span, IReadOnlyCollection<SyntaxToken<TKInd>> tokens, LexerState state)
     {
@@ -13,11 +12,9 @@ public readonly struct Lexer<TKInd>
         State = state;
     }
 
-    public IReadOnlyCollection<SyntaxToken<TKInd>> Tokens { get; }
-
+    public readonly IReadOnlyCollection<SyntaxToken<TKInd>> Tokens;
     public readonly SourceSpan Span;
-
-    public LexerState State { get; }
+    public readonly LexerState State;
 
     [Pure]
     public Lexer<TKInd> NoMatch() => new(Span, Tokens, LexerState.NoMatch);
@@ -30,23 +27,15 @@ public readonly struct Lexer<TKInd>
         var span => New(span.Value, kind),
     };
 
-    public static Lexer<TKInd> operator +(Lexer<TKInd> lexer, Grammar<TKInd>.Rule rule) => lexer.State switch
-    {
-        LexerState.Match or
-        LexerState.Done => rule(lexer),
+    public static Lexer<TKInd> operator +(Lexer<TKInd> lexer, Grammar<TKInd>.Rule rule)
+        => lexer.State == LexerState.NoMatch
+        ? lexer
+        : rule(lexer);
 
-        // LexerState.NoMatch
-        _ => lexer,
-    };
-
-    public static Lexer<TKInd> operator |(Lexer<TKInd> lexer, Grammar<TKInd>.Rule rule) => lexer.State switch
-    {
-        LexerState.NoMatch => rule(lexer),
-
-        // LexerState.Match
-        // LexerState.Done
-        _ => lexer,
-    };
+    public static Lexer<TKInd> operator |(Lexer<TKInd> lexer, Grammar<TKInd>.Rule rule)
+        => lexer.State != LexerState.NoMatch
+        ? lexer
+        : rule(lexer);
 
     [Pure]
     private Lexer<TKInd> New(TextSpan span, TKInd kind)
@@ -63,8 +52,5 @@ public readonly struct Lexer<TKInd>
 
     [Pure]
     public static Lexer<TKInd> Tokenize(SourceText source, Grammar<TKInd>.Rule rule)
-    {
-        var lexer = Lexer<TKInd>.New(source);
-        return rule(lexer);
-    }
+        => rule(Lexer<TKInd>.New(source));
 }
