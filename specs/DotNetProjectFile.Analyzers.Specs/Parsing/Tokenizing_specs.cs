@@ -111,10 +111,12 @@ public class Does_not_match
     [Test]
     public void required_match_on_eof()
     {
-        var lex = Lex.Tokenize(Source.Text("hello "), Grammar.multiple_words);
+        var lex = Lex.Tokenize(Source.Text("hello "),
+            l => l + Grammar.word + Grammar.eof);
 
         lex.Should()
-            .NotHaveTokenized();
+            .NotHaveTokenized(
+                LexToken.New(0, 5, "hello", SyntaxKind.Word));
     }
 }
 

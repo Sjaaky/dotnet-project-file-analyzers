@@ -64,17 +64,21 @@ public readonly record struct SourceSpan(SourceText Source, TextSpan Span)
     [Pure]
     public TextSpan? Matches(Predicate<char> match)
     {
-        var length = 0;
-        for (var i = Span.Start; i < Span.Length; i++)
-        {
-            if (match(Source[i]))
-            {
-                length++;
-            }
-            else break;
-        }
+        if (IsEmpty) return null;
 
-        return length != 0 ? new(Span.Start, length) : NoMatch;
+        var len = -1;
+        var i = Start;
+
+        while (++len < Length)
+        {
+            if (!match(Source[i++]))
+            {
+                return len == 0
+                    ? null
+                    : new(Span.Start, len);
+            }
+        }
+        return Span;
     }
 
     [Pure]
